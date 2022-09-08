@@ -54,15 +54,16 @@ namespace CNUSPACKER::utils {
         return hash;
     }
 
-    std::vector<unsigned char> HashUtil::HashSHA1(std::vector<unsigned char> &data) {
-        std::vector<unsigned char> hash;
+    aligned_vector<unsigned char> HashUtil::HashSHA1(std::vector<unsigned char> data) {
+        aligned_vector<unsigned char> hash;
+
         getSHA1(data.data(), data.size(), hash.data());
         return hash;
     }
 
-    std::vector<unsigned char> HashUtil::HashSHA1(const std::string &file) {
+    aligned_vector<unsigned char> HashUtil::HashSHA1(const std::string &file) {
         std::vector<unsigned char> data;
-        std::vector<unsigned char> hash;
+        aligned_vector<unsigned char> hash;
         unsigned char *stuff = data.data();
         loadFile(file.c_str(), &stuff);
         getSHA1(stuff, sizeof(stuff), hash.data());
