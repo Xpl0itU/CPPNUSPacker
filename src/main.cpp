@@ -5,7 +5,7 @@
 int main() {
     CNUSPACKER::utils::XMLParser *xml = new CNUSPACKER::utils::XMLParser();
     xml->LoadDocument("app.xml");
-    printf("thing: %s\n", xml->GetAppXMLInfo()->getOsMask().data());
+    printf("osMask: %s \n", xml->GetAppXMLInfo()->getOsMask().data());
 
     return 0;
 }

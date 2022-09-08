@@ -3,7 +3,7 @@
 
 namespace CNUSPACKER::utils {
 
-    void Utils::DeleteDir(const std::wstring &dir) {
+    void Utils::DeleteDir(const std::string &dir) {
         std::filesystem::remove_all(dir);
     }
 
@@ -16,7 +16,7 @@ namespace CNUSPACKER::utils {
         return newSize * alignment;
     }
 
-    std::vector<unsigned char> Utils::HexStringToByteArray(const std::wstring &s) {
+    std::vector<unsigned char> Utils::HexStringToByteArray(const std::string &s) {
         int outputLength = s.length() / 2;
         std::vector<unsigned char> output(outputLength);
         for (int i = 0; i < outputLength; i++) {
@@ -26,16 +26,16 @@ namespace CNUSPACKER::utils {
         return output;
     }
 
-    std::wstring Utils::ByteArrayToHexString(std::vector<unsigned char> bytes) {
-        std::vector<wchar_t> c(bytes.size() * 2);
+    std::string Utils::ByteArrayToHexString(std::vector<unsigned char> bytes) {
+        std::vector<char> c(bytes.size() * 2);
         for (int i = 0; i < bytes.size(); i++) {
             int b = bytes[i] >> 4;
-            c[i * 2] = static_cast<wchar_t>(55 + b + (((b - 10) >> 31) & -7));
+            c[i * 2] = static_cast<char>(55 + b + (((b - 10) >> 31) & -7));
             b = bytes[i] & 0xF;
-            c[i * 2 + 1] = static_cast<wchar_t>(55 + b + (((b - 10) >> 31) & -7));
+            c[i * 2 + 1] = static_cast<char>(55 + b + (((b - 10) >> 31) & -7));
         }
 
-        return std::wstring(c.data());
+        return std::string(c.data());
     }
 
     std::vector<unsigned char> Utils::CopyOfRange(std::vector<unsigned char> &src, int start, int end) {
