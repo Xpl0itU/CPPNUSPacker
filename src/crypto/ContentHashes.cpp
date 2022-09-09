@@ -1,4 +1,7 @@
 #include <crypto/ContentHashes.h>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
 
 using namespace CNUSPACKER::contents;
 using namespace CNUSPACKER::utils;
@@ -28,7 +31,7 @@ namespace CNUSPACKER::crypto {
                     std::copy_n(inHashes[i].begin(), 20, cur_hashes.begin() + (i % 16) * 20);
                 }
             }
-            outHashes.emplace(new_block, HashUtil::HashSHA1(cur_hashes));
+            outHashes.emplace(new_block, std::vector<unsigned char>(HashUtil::HashSHA1(cur_hashes).data(), HashUtil::HashSHA1(cur_hashes).data() + HashUtil::HashSHA1(cur_hashes).size()));
 
             if (new_block % 100 == 0) {
                 std::cout << StringHelper::formatSimple("\rcalculating h{0}: {1}%", hashLevel, 100 * new_block / hashesCount);
@@ -39,16 +42,18 @@ namespace CNUSPACKER::crypto {
 
     void ContentHashes::CalculateH0Hashes(const std::string &file) {
         {
-            FileStream input = FileStream(file, FileMode::Open);
+            std::fstream input;
+            input.open(file, std::fstream::in | std::fstream::binary);
+            auto input_lenght = std::filesystem::file_size(file);
 
             constexpr int bufferSize = 0xFC00;
 
             std::vector<unsigned char> buffer(bufferSize);
-            int total_blocks = static_cast<int>(input.Length / bufferSize) + 1;
+            int total_blocks = static_cast<int>(input_lenght / bufferSize) + 1;
             for (int block = 0; block < total_blocks; block++) {
-                input.Read(buffer, 0, bufferSize);
+                input.read((char *) buffer.data(), bufferSize);
 
-                h0Hashes.emplace(block, HashUtil::HashSHA1(buffer));
+                h0Hashes.emplace(block, std::vector<unsigned char>(HashUtil::HashSHA1(buffer).data(), HashUtil::HashSHA1(buffer).data() + HashUtil::HashSHA1(buffer).size()));
 
                 if (block % 100 == 0) {
                     std::cout << StringHelper::formatSimple("\rcalculating h0: {0}%", 100 * block / total_blocks);
@@ -63,15 +68,17 @@ namespace CNUSPACKER::crypto {
         if (block > blockCount) {
             throw std::runtime_error("This shouldn't happen.");
         }
+        size_t size;
+        unsigned char *buffer = (unsigned char *) malloc(0x400);
+        FILE *hashes = open_memstream((char **) &buffer, &size);
 
-        MemoryStream *hashes = new MemoryStream(0x400);
         int h0_hash_start = (block / 16) * 16;
         for (int i = 0; i < 16; i++) {
             int index = h0_hash_start + i;
             if (h0Hashes.find(index) != h0Hashes.end()) {
-                hashes->Write(h0Hashes[index]);
+                fwrite(h0Hashes[index].data(), strlen((char *) h0Hashes[index].data()), 1, hashes);
             } else {
-                hashes->Seek(20, SeekOrigin::Current);
+                fseek(hashes, 20, SEEK_SET);
             }
         }
 
@@ -79,9 +86,9 @@ namespace CNUSPACKER::crypto {
         for (int i = 0; i < 16; i++) {
             int index = h1_hash_start + i;
             if (h1Hashes.find(index) != h1Hashes.end()) {
-                hashes->Write(h1Hashes[index]);
+                fwrite(h1Hashes[index].data(), strlen((char *) h1Hashes[index].data()), 1, hashes);
             } else {
-                hashes->Seek(20, SeekOrigin::Current);
+                fseek(hashes, 20, SEEK_CUR);
             }
         }
 
@@ -89,32 +96,36 @@ namespace CNUSPACKER::crypto {
         for (int i = 0; i < 16; i++) {
             int index = h2_hash_start + i;
             if (h2Hashes.find(index) != h2Hashes.end()) {
-                hashes->Write(h2Hashes[index]);
+                fwrite(h2Hashes[index].data(), strlen((char *) h2Hashes[index].data()), 1, hashes);
             } else {
-                hashes->Seek(20, SeekOrigin::Current);
+                fseek(hashes, 20, SEEK_CUR);
             }
         }
 
-        delete hashes;
-        return hashes->GetBuffer();
+        fclose(hashes);
+        return std::vector<unsigned char>(buffer, buffer + strlen((char *) buffer));
     }
 
     std::vector<unsigned char> ContentHashes::GetH3Hashes() {
-        MemoryStream *buffer = new MemoryStream(h3Hashes.size() * 20);
+        size_t size;
+        unsigned char *buffer = (unsigned char *) malloc(h3Hashes.size() * 20);
+        FILE *hashes = open_memstream((char **) &buffer, &size);
+
         for (int i = 0; i < h3Hashes.size(); i++) {
-            buffer->Write(h3Hashes[i]);
+            fwrite(h3Hashes[i].data(), strlen((char *) h3Hashes[i].data()), 1, hashes);
         }
 
-        delete buffer;
-        return buffer->GetBuffer();
+        fclose(hashes);
+        return std::vector<unsigned char>(buffer, buffer + strlen((char *) buffer));
     }
 
     void ContentHashes::SaveH3ToFile(const std::string &h3Path) {
         if (h3Hashes.size() > 0) {
             {
-                FileStream fos = FileStream(h3Path, FileMode::Create);
+                std::fstream fos;
+                fos.open(h3Path, std::fstream::out);
 
-                fos.Write(GetH3Hashes());
+                fos.write((char *) GetH3Hashes().data(), strlen((char *) GetH3Hashes().data()));
             }
         }
     }

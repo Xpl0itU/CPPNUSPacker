@@ -14,12 +14,12 @@ INC_DIRS := $(shell find $(INCLUDE_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 ./$(TARGET_EXEC): $(OBJS)
-	g++ $(CXXFLAGS) $(INC_FLAGS) $(OBJS) -o $@ $(LDFLAGS)
+	clang++-14 $(CXXFLAGS) $(INC_FLAGS) $(OBJS) -o $@ $(LDFLAGS)
 #	strip -s $@
 
 $(BUILD_DIR)/%.cpp.o: %.cpp
 	mkdir -p $(dir $@)
-	g++ $(CXXFLAGS) $(INC_FLAGS) -c $< -o $@
+	clang++-14 $(CXXFLAGS) $(INC_FLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:

@@ -20,7 +20,7 @@ namespace CNUSPACKER::utils {
         int outputLength = s.length() / 2;
         std::vector<unsigned char> output(outputLength);
         for (int i = 0; i < outputLength; i++) {
-            output[i] = reinterpret_cast<unsigned char>(s.substr(i * 2, 2).data());
+            output[i] = *(unsigned char *) (s.substr(i * 2, 2).data());
         }
 
         return output;

@@ -16,7 +16,7 @@ namespace CNUSPACKER::utils {
         appxmlinfo->setAppType(strtol(appElement->FirstChildElement("app_type")->GetText(), nullptr, 16));
         appxmlinfo->setGroupID(strtol(appElement->FirstChildElement("group_id")->GetText(), nullptr, 16));
         unsigned char *osMaskText = (unsigned char *) (appElement->FirstChildElement("os_mask")->GetText());
-        std::vector<unsigned char> osMask(osMaskText, osMaskText + strlen(osMaskText));
+        std::vector<unsigned char> osMask(osMaskText, osMaskText + strlen((char *) osMaskText));
         appxmlinfo->setOsMask(osMask);
         appxmlinfo->setCommonID(strtol(appElement->FirstChildElement("common_id")->GetText(), nullptr, 16));
 
